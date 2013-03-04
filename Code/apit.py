@@ -1,12 +1,13 @@
 from random import randint
 from itertools import combinations
+from shapely.validation import explain_validity
 from shapely.geometry import Point,Polygon,MultiPolygon
 import random
 import itertools
 x_max=100000
 y_max=100000
-percent_beacon=0.02
-total_nodes=1000
+percent_beacon=0.01
+total_nodes=10000
 #def random_coordinate(x,y):
 #        return (randint(x,y),randint(x,y))
 
@@ -68,22 +69,24 @@ def findIntersect(inside_set):
                 #print "In 2"
                 p1=Polygon(inside_set[0])
                 p2=Polygon(inside_set[1])
-                if (p1.intersection(p2).area !=0):
-                        return list(p1.intersection(p2).exterior.coords)
-                else:
-                        return ([])
+                #if (p1.intersection(p2).area !=0):
+                        #print p1.intersection(p2).area
+                return list(p1.intersection(p2).exterior.coords)
+                #else:
+                #        return ([])
         else:
                 #print "In >2"
                 p1=Polygon(inside_set[0])
                 p2=Polygon(inside_set[1])
                 a=inside_set.pop(0)
                 b=inside_set.pop(0)
-                if (p1.intersection(p2).area !=0):
-                        inside_set.append(list(p1.intersection(p2).exterior.coords))
-                        return findIntersect(inside_set)
-                else:
-                        return ([])
-
+                #if (p1.intersection(p2).area !=0):
+                        #print p1.intersection(p2).area
+                        #explain_validity(p1.intersection(p2))
+                inside_set.insert(0,list(p1.intersection(p2).exterior.coords))
+                return findIntersect(inside_set)
+                #else:
+                #        return ([])
 #print generateGrid(0.2,20)
 complete_list=generateGrid(percent_beacon,total_nodes)
 beacon_list=complete_list[0]    #known co-ordinates
@@ -94,9 +97,33 @@ print normal_nodes
 #        print x
 #print point_inside_polygon(1,1,[(0,0),(0,2),(2,2),(2,0)])
 triangle_list=all_triangles(beacon_list)        #list of list of triangles
+triangle_centroid=dict()
+for triangle in triangle_list:
+        p=Polygon(triangle)
+        centroid=list(p.centroid.coords)
+        triangle_centroid[str(triangle)]=centroid
+
+def centroid_set(inside_set):
+        if (len(inside_set)==0):
+                return [[x_max/2,y_max/2]]
+        else:   
+                sum_x=0
+                sum_y=0
+                l=len(inside_set)
+                for triangle in inside_set:
+                        centroid=triangle_centroid[str(triangle)]
+                        sum_x=sum_x+centroid[0][0]
+                        sum_y=sum_y+centroid[0][1]
+                return [[sum_x/l,sum_y/l]]
 #print triangle_list
-#a=findIntersect([[(0,0),(0,2),(2,0)],[(0,0),(2,2),(2,0)]])
-#p1=Polygon(a)
+"""
+a=findIntersect([[(-0.5,0),(0,1),(0.5,0)],[(-0.5,0.5),(0.5,0.5),(0,-0.5)]])
+print a
+b=findIntersect([[(0,0.5),(-0.5,-0.5),(0.5,-0.5)],a])
+print b
+c=findIntersect([[(-0.5,0),(0,1),(0.5,0)],[(-0.5,0.5),(0.5,0.5),(0,-0.5)],[(0,0.5),(-0.5,-0.5),(0.5,-0.5)]])
+print c
+"""
 #print list(p1.centroid.coords)
 #print point_inside_polygon(1,1,[(0,0),(10,0),(0,10)])
 error_x=0
@@ -106,9 +133,10 @@ for normal_node in normal_list:
         for triangle in triangle_list:
                 if (point_inside_polygon(normal_node[0],normal_node[1],triangle)):
                         inside_set.append(triangle)
-        common_region=findIntersect(inside_set)
-        p1=Polygon(common_region)
-        centroid=list(p1.centroid.coords)
+        centroid=centroid_set(inside_set)
+        #common_region=findIntersect(inside_set)
+        #p1=Polygon(common_region)
+        #centroid=list(p1.centroid.coords)
         diff_x=centroid[0][0]-normal_node[0]
         diff_y=centroid[0][1]-normal_node[1]
         error_x=error_x+mod(diff_x)            
