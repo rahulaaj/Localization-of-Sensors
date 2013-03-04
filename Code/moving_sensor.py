@@ -10,9 +10,9 @@ import numpy as np
 import time
 x_max=10000
 y_max=10000
-percent_beacon=0.001
 total_nodes=10000
-node_range=10
+node_range=100
+num_iter=1000
 
 def random_coordinate():
         return (randint(x_max,y_max),randint(x_max,y_max))
@@ -86,8 +86,26 @@ def walk(num_iter):
                 walk_list.append(new_point)
                 first_point=new_point
         return walk_list
-                
 
+def sequence_walk(num_iter):
+        sqrt_num_iter=int(sqrt(num_iter))
+        spaced_list=list(np.linspace(1,sqrt_num_iter,sqrt_num_iter))
+        xprime=x_max/(sqrt_num_iter+1)
+        yprime=y_max/(sqrt_num_iter+1)
+        walk_list=[(x*xprime,y*yprime) for (x,y) in list(itertools.product(spaced_list,spaced_list))]
+        return walk_list
+                
+def all_rectangles(walk_list):
+        rectangle_list=[]
+        for (x,y) in walk_list:
+                temp=[]
+                temp.append((x-node_range,y-node_range))
+                temp.append((x+node_range,y-node_range))
+                temp.append((x+node_range,y+node_range))
+                temp.append((x-node_range,y+node_range))
+                rectangle_list.append(temp)
+        return rectangle_list
+        
 
 complete_list=generateGrid(total_nodes)
 normal_list=complete_list[0]    #unknown co-ordinates
@@ -95,11 +113,17 @@ normal_nodes=len(normal_list)
 error_x=0
 error_y=0
 start_time=time.time()
+#walk_list=walk(num_iter)
+walk_list=sequence_walk(num_iter)
+#print walk_list
+rectangle_list=all_rectangles(walk_list)
+#print rectangle_list
 for normal_node in normal_list:
         inside_set=[]
-        for triangle in triangle_list:
-                if (point_inside_polygon(normal_node[0],normal_node[1],triangle)):
-                        inside_set.append(triangle)
+        for rectangle in rectangle_list:
+                if (point_inside_polygon(normal_node[0],normal_node[1],rectangle)):
+                        inside_set.append(rectangle)
+        #print len(inside_set)
         #centroid=centroid_set(inside_set)
         common_region=findIntersect(inside_set)
         p1=Polygon(common_region)
@@ -116,14 +140,12 @@ program_time=time.time() - start_time
 average_time=program_time/normal_nodes
 avgerror_x=(error_x)/normal_nodes
 avgerror_y=(error_y)/normal_nodes
-"""
 print "Average error in x-coordinate"
 print avgerror_x
 print "Average error in y-coordinate"
 print avgerror_y
 print "Average time for each node"
 print average_time
-"""
-files=open('result_apit.txt','a')
-files.write(str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
+files=open('result_moving_sensor.txt','a')
+files.write(str(node_range)+'    '+str(num_iter)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
 files.close()

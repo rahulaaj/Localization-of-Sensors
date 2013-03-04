@@ -9,7 +9,7 @@ import numpy as np
 import time
 x_max=10000
 y_max=10000
-percent_beacon=0.001
+percent_beacon=0.01
 total_nodes=10000
 #def random_coordinate(x,y):
 #        return (randint(x,y),randint(x,y))
