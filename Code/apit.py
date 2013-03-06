@@ -1,8 +1,9 @@
+from __future__ import division
 from random import randint
 from itertools import combinations
 from shapely.validation import explain_validity
 from shapely.geometry import Point,Polygon,MultiPolygon
-from math import sqrt
+from math import sqrt,log10,pi
 import random
 import itertools
 import numpy as np
@@ -10,7 +11,14 @@ import time
 x_max=10000
 y_max=10000
 percent_beacon=0.01
-total_nodes=10000
+percent_obstacles=0.1
+total_nodes=1000
+height_node=1000                 # in m
+obst_height_range=100            # in m
+initial_power=100                # in dB
+frequency=1000000                # in Hz
+n=3
+#strength_dict=dict()            #key is sensor_coordinate and beacon_coordinate as tuple of tuples to get strength
 #def random_coordinate(x,y):
 #        return (randint(x,y),randint(x,y))
 #files=open('result_apit.txt','a')
@@ -22,22 +30,29 @@ def mod(x):
         else:
                 return (-x)
 
-def generateGrid(percent_beacon,total_nodes):
+def generateGrid(percent_beacon,percent_obstacles,total_nodes):
         beacon_nodes=int(percent_beacon * total_nodes)
+        obstacles=int(percent_obstacles * total_nodes)
         beacon_list=[]
         normal_list=[]
+        obstacles_list=[]
         sqrt_beacon_nodes=int(sqrt(beacon_nodes))
         spaced_list=list(np.linspace(0,x_max,sqrt_beacon_nodes))
         beacon_list=[(int(x),int(y)) for (x,y) in list(itertools.product(spaced_list,spaced_list))]
         beacon_nodes=len(beacon_list)
         normal_nodes=total_nodes - beacon_nodes
-        normal_list_x=random.sample(range(x_max),normal_nodes)
-        normal_list_y=random.sample(range(y_max),normal_nodes)
+        total=normal_nodes+obstacles
+        total_list_x=random.sample(range(x_max),total)
+        total_list_y=random.sample(range(y_max),total)
         for i in range(0,normal_nodes):
-                normal_list.append((normal_list_x[i],normal_list_y[i]))
+                normal_list.append((total_list_x[i],total_list_y[i]))
+        for i in range(normal_nodes,total):
+                height=randint(0,height_node+obst_height_range)
+                obstacles_list.append(((total_list_x[i],total_list_y[i]),height))
         complete_list=[]
         complete_list.append(beacon_list)
         complete_list.append(normal_list)
+        complete_list.append(obstacles_list)
         return complete_list
 
 def point_inside_polygon(x,y,poly):
@@ -92,16 +107,45 @@ def findIntersect(inside_set):
                         #explain_validity(p1.intersection(p2))
                 inside_set.insert(0,list(p1.intersection(p2).exterior.coords))
                 return findIntersect(inside_set)
-                #else:
-                #        return ([])
-#print generateGrid(0.2,20)
-complete_list=generateGrid(percent_beacon,total_nodes)
+
+def create_strength_dict(beacon_list,obstacles_list,normal_list):
+        strength_dict=dict()
+        for beacon in beacon_list:
+                for normal in normal_list:
+                        distance=sqrt((normal[0]-beacon[0])*(normal[0]-beacon[0])+(normal[1]-beacon[1])*(normal[1]-beacon[1]))
+                        new_strength=initial_power+(n*10*log10(frequency/(4*pi*distance)))
+                        for (obstacle,height) in obstacles_list:
+                                d1=sqrt((obstacle[0]-beacon[0])*(obstacle[0]-beacon[0])+(obstacle[1]-beacon[1])*(obstacle[1]-beacon[1]))/1000
+                                d2=sqrt((obstacle[0]-normal[0])*(obstacle[0]-normal[0])+(obstacle[1]-normal[1])*(obstacle[1]-normal[1]))/1000
+                                d=distance/1000
+                                f=frequency
+                                f1=17.3*sqrt((d1*d2*1000000)/(f*d))
+                                hl=height_node
+                                ho=height
+                                h=hl-ho
+                                cn=h/f1
+                                a=10-20*cn
+                                new_strength=new_strength+a
+                        strength_dict[(normal,beacon)]=new_strength
+        return strength_dict
+                                
+
+complete_list=generateGrid(percent_beacon,percent_obstacles,total_nodes)
 beacon_list=complete_list[0]    #known co-ordinates
 beacon_nodes=len(beacon_list)
 #print beacon_list
 normal_list=complete_list[1]    #unknown co-ordinates
 normal_nodes=len(normal_list)
-triangle_list=all_triangles(beacon_list)        #list of list of triangles
+#print normal_list
+obstacles_list=complete_list[2] #obstacles with first element coordinates and second the height
+#print obstacles_list
+strength_dict=create_strength_dict(beacon_list,obstacles_list,normal_list)
+print "Dictionary created"
+print len(strength_dict)
+#print strength_dict[(normal_list[3],beacon_list[4])]
+#triangle_list=all_triangles(beacon_list)        #list of list of triangles
+
+"""
 error_x=0
 error_y=0
 start_time=time.time()
@@ -127,6 +171,7 @@ average_time=program_time/normal_nodes
 avgerror_x=(error_x)/normal_nodes
 avgerror_y=(error_y)/normal_nodes
 """
+"""
 print "Average error in x-coordinate"
 print avgerror_x
 print "Average error in y-coordinate"
@@ -134,6 +179,8 @@ print avgerror_y
 print "Average time for each node"
 print average_time
 """
+"""
 files=open('result_apit.txt','a')
 files.write(str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
 files.close()
+"""
