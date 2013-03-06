@@ -15,8 +15,8 @@ percent_obstacles=0.1
 total_nodes=1000
 height_node=1000                 # in m
 obst_height_range=100            # in m
-initial_power=10000              # in dB
-frequency=1000000                # in Hz
+initial_power=1000000            # in dB
+frequency=0.0001                 # in Hz
 n=3
 #strength_dict=dict()            #key is sensor_coordinate and beacon_coordinate as tuple of tuples to get strength
 #def random_coordinate(x,y):
@@ -32,14 +32,14 @@ def mod(x):
 
 def neighbor(x,y):
         temp=[]
-        temp.append((x-1,y-1))
-        temp.append((x,y-1))
-        temp.append((x+1,y-1))
-        temp.append((x-1,y))
-        temp.append((x+1,y))
-        temp.append((x-1,y+1))
-        temp.append((x,y+1))
-        temp.append((x+1,y+1))
+        temp.append((x-10,y-10))
+        temp.append((x,y-10))
+        temp.append((x+10,y-10))
+        temp.append((x-10,y))
+        temp.append((x+10,y))
+        temp.append((x-10,y+10))
+        temp.append((x,y+10))
+        temp.append((x+10,y+10))
         return temp
 
 def normalWithNeighbors(normal_list):
@@ -131,11 +131,13 @@ def findIntersect(inside_set):
 
 def create_strength_dict(beacon_list,obstacles_list,normal_list):
         strength_dict=dict()
-        new_normal_list=normalWithNeighbors(normal_list)      
+        new_normal_list=normalWithNeighbors(normal_list)
+        #new_normal_list=normal_list      
         for beacon in beacon_list:
                 for normal in new_normal_list:
                         distance=sqrt((normal[0]-beacon[0])*(normal[0]-beacon[0])+(normal[1]-beacon[1])*(normal[1]-beacon[1]))
                         new_strength=initial_power+(n*10*log10(frequency/(4*pi*distance)))
+                        #original=new_strength
                         for (obstacle,height) in obstacles_list:
                                 d1=sqrt((obstacle[0]-beacon[0])*(obstacle[0]-beacon[0])+(obstacle[1]-beacon[1])*(obstacle[1]-beacon[1]))/1000
                                 d2=sqrt((obstacle[0]-normal[0])*(obstacle[0]-normal[0])+(obstacle[1]-normal[1])*(obstacle[1]-normal[1]))/1000
@@ -148,6 +150,10 @@ def create_strength_dict(beacon_list,obstacles_list,normal_list):
                                 cn=h/f1
                                 a=10-20*cn
                                 new_strength=new_strength+a
+                        #change=original-new_strength
+                        #print original
+                        #print change
+                        #print "Next"
                         strength_dict[(normal,beacon)]=new_strength
         return strength_dict
  
@@ -161,10 +167,11 @@ normal_nodes=len(normal_list)
 #print normal_list
 obstacles_list=complete_list[2] #obstacles with first element coordinates and second the height
 #print obstacles_list
+obstacles=len(obstacles_list)
 triangle_list=all_triangles(beacon_list)        #list of list of triangles
+start_time=time.time()
 strength_dict=create_strength_dict(beacon_list,obstacles_list,normal_list)
 print "Dictionary created"
-
 def point_inside_triangle(x,y,triangle):
         neighbor_list=neighbor(x,y)
         strength1=strength_dict[((x,y),triangle[0])]
@@ -181,11 +188,10 @@ def point_inside_triangle(x,y,triangle):
                         return False
         #print in_triangle
         #return in_triangle
-        return True
+        return (True or not point_inside_polygon(x,y,triangle))
 
 error_x=0
 error_y=0
-start_time=time.time()
 for normal_node in normal_list:
         inside_set=[]
         #print "Start"
@@ -217,5 +223,5 @@ print avgerror_y
 print "Average time for each node"
 print average_time
 files=open('result_apit.txt','a')
-files.write(str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
+files.write(str(obstacles)+'    '+str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
 files.close()
