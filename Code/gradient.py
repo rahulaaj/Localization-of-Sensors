@@ -11,11 +11,11 @@ import random
 import itertools
 import numpy as np
 import time
-x_max=10000
-y_max=10000
+x_max=5000
+y_max=5000
 percent_beacon=0.3
 total_nodes=5000
-node_range=200
+node_range=100
 
 def mod(x):
         if (x>0):
@@ -131,12 +131,33 @@ def error_min(beacon_distance):
                 constry=lambda x: x[1]
                 coord_list=list(fmin_cobyla(error,[0,0],[constrx,constry],rhobeg=10,rhoend=1,maxfun=100000))
                 return (coord_list[0],coord_list[1])
+
+def hop_size(i):
+        other_list=beacon_list
+        #other_list.remove(beacon_list[i])
+        sum_dist=0
+        sum_hop=0
+        #print "......"
+        #print len(other_list)
+        #print len(beacon_list)
+        #print "!!!!!!"
+        for other in other_list:
+                if(hop_dict.setdefault((other,i),0)!=0):
+                        #print other
+                        #print i
+                        sum_dist=sum_dist+sqrt((beacon_list[i][0]-other[0])*(beacon_list[i][0]-other[0])+(beacon_list[i][1]-other[1])*(beacon_list[i][1]-other[1]))
+                        sum_hop=sum_hop+hop_dict[(other,i)]
+        if(sum_hop==0):
+                return ((node_range)/2)
+        else:
+                return (sum_dist/sum_hop)
         
 def find_min(normal_node):
         beacon_distance=[]
         for i in range(0,len(beacon_list)):
                 if(hop_dict.setdefault((normal_node,i),0)!=0):
-                        beacon_distance.append((i,(node_range*hop_dict[(normal_node,i)])/2))
+                        beacon_distance.append((i,hop_size(i)*hop_dict[(normal_node,i)]))
+        #print beacon_distance
         (x,y)=error_min(beacon_distance)
         return (x,y) 
 
@@ -166,6 +187,7 @@ print "Average error in y-coordinate"
 print avgerror_y
 print "Average time required"
 print average_time
+print "hi"
 files=open('result_gradient.txt','a')
 files.write(str(node_range)+'    '+str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
 files.close()
