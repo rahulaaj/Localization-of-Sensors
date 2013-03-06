@@ -15,7 +15,7 @@ percent_obstacles=0.1
 total_nodes=1000
 height_node=1000                 # in m
 obst_height_range=100            # in m
-initial_power=100                # in dB
+initial_power=10000              # in dB
 frequency=1000000                # in Hz
 n=3
 #strength_dict=dict()            #key is sensor_coordinate and beacon_coordinate as tuple of tuples to get strength
@@ -29,6 +29,27 @@ def mod(x):
                 return x
         else:
                 return (-x)
+
+def neighbor(x,y):
+        temp=[]
+        temp.append((x-1,y-1))
+        temp.append((x,y-1))
+        temp.append((x+1,y-1))
+        temp.append((x-1,y))
+        temp.append((x+1,y))
+        temp.append((x-1,y+1))
+        temp.append((x,y+1))
+        temp.append((x+1,y+1))
+        return temp
+
+def normalWithNeighbors(normal_list):
+        final_list=[]
+        for (x,y) in normal_list:
+                final_list.append((x,y))
+                neighbors=neighbor(x,y)
+                final_list=final_list+neighbors
+        return final_list
+                
 
 def generateGrid(percent_beacon,percent_obstacles,total_nodes):
         beacon_nodes=int(percent_beacon * total_nodes)
@@ -55,6 +76,15 @@ def generateGrid(percent_beacon,percent_obstacles,total_nodes):
         complete_list.append(obstacles_list)
         return complete_list
 
+def all_triangles(xy_list):
+        temp_list=[]
+        for triplet in combinations(xy_list,3):
+                #print list(triplet)
+                #triplet_list=[]
+                #triplet_list.append(triplet)
+                temp_list.append(list(triplet))
+        return temp_list
+
 def point_inside_polygon(x,y,poly):
     n = len(poly)
     inside =False
@@ -70,15 +100,6 @@ def point_inside_polygon(x,y,poly):
                         inside = not inside
         px,py = p_x,p_y
     return inside
-
-def all_triangles(xy_list):
-        temp_list=[]
-        for triplet in combinations(xy_list,3):
-                #print list(triplet)
-                #triplet_list=[]
-                #triplet_list.append(triplet)
-                temp_list.append(list(triplet))
-        return temp_list
 
 def findIntersect(inside_set):
         if (len(inside_set)==0):
@@ -110,8 +131,9 @@ def findIntersect(inside_set):
 
 def create_strength_dict(beacon_list,obstacles_list,normal_list):
         strength_dict=dict()
+        new_normal_list=normalWithNeighbors(normal_list)      
         for beacon in beacon_list:
-                for normal in normal_list:
+                for normal in new_normal_list:
                         distance=sqrt((normal[0]-beacon[0])*(normal[0]-beacon[0])+(normal[1]-beacon[1])*(normal[1]-beacon[1]))
                         new_strength=initial_power+(n*10*log10(frequency/(4*pi*distance)))
                         for (obstacle,height) in obstacles_list:
@@ -128,8 +150,8 @@ def create_strength_dict(beacon_list,obstacles_list,normal_list):
                                 new_strength=new_strength+a
                         strength_dict[(normal,beacon)]=new_strength
         return strength_dict
-                                
-
+ 
+#print normalWithNeighbors([(2,1),(1,2)])                              
 complete_list=generateGrid(percent_beacon,percent_obstacles,total_nodes)
 beacon_list=complete_list[0]    #known co-ordinates
 beacon_nodes=len(beacon_list)
@@ -139,21 +161,39 @@ normal_nodes=len(normal_list)
 #print normal_list
 obstacles_list=complete_list[2] #obstacles with first element coordinates and second the height
 #print obstacles_list
+triangle_list=all_triangles(beacon_list)        #list of list of triangles
 strength_dict=create_strength_dict(beacon_list,obstacles_list,normal_list)
 print "Dictionary created"
-print len(strength_dict)
-#print strength_dict[(normal_list[3],beacon_list[4])]
-#triangle_list=all_triangles(beacon_list)        #list of list of triangles
 
-"""
+def point_inside_triangle(x,y,triangle):
+        neighbor_list=neighbor(x,y)
+        strength1=strength_dict[((x,y),triangle[0])]
+        strength2=strength_dict[((x,y),triangle[1])]
+        strength3=strength_dict[((x,y),triangle[2])]
+        #in_triangle=True
+        for neighbors in neighbor_list:
+                strength1_n=strength_dict[(neighbors,triangle[0])]
+                strength2_n=strength_dict[(neighbors,triangle[0])]
+                strength3_n=strength_dict[(neighbors,triangle[0])]
+                if((strength1>strength1_n and strength2>strength2_n and strength3>strength3_n) or (strength1<strength1_n and strength2<strength2_n and strength3<strength3_n)):
+                        #print neighbors
+                        #in_triangle=False
+                        return False
+        #print in_triangle
+        #return in_triangle
+        return True
+
 error_x=0
 error_y=0
 start_time=time.time()
 for normal_node in normal_list:
         inside_set=[]
+        #print "Start"
+        #print normal_node
         for triangle in triangle_list:
                 if (point_inside_polygon(normal_node[0],normal_node[1],triangle)):
                         inside_set.append(triangle)
+        #print inside_set
         #centroid=centroid_set(inside_set)
         common_region=findIntersect(inside_set)
         p1=Polygon(common_region)
@@ -170,17 +210,12 @@ program_time=time.time() - start_time
 average_time=program_time/normal_nodes
 avgerror_x=(error_x)/normal_nodes
 avgerror_y=(error_y)/normal_nodes
-"""
-"""
 print "Average error in x-coordinate"
 print avgerror_x
 print "Average error in y-coordinate"
 print avgerror_y
 print "Average time for each node"
 print average_time
-"""
-"""
 files=open('result_apit.txt','a')
 files.write(str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
 files.close()
-"""

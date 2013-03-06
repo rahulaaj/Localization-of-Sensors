@@ -10,7 +10,7 @@ import time
 x_max=10000
 y_max=10000
 percent_beacon=0.01
-total_nodes=10000
+total_nodes=1000
 #def random_coordinate(x,y):
 #        return (randint(x,y),randint(x,y))
 #files=open('result_apit.txt','a')
