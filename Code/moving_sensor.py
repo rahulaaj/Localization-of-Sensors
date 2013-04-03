@@ -10,9 +10,9 @@ import numpy as np
 import time
 x_max=10000
 y_max=10000
-total_nodes=10000
+total_nodes=1000
 node_range=100
-num_iter=1000
+num_iter=1000*10
 
 def random_coordinate():
         return (randint(x_max,y_max),randint(x_max,y_max))
@@ -112,6 +112,8 @@ normal_list=complete_list[0]    #unknown co-ordinates
 normal_nodes=len(normal_list)
 error_x=0
 error_y=0
+error_x2=0
+error_y2=0
 start_time=time.time()
 #walk_list=walk(num_iter)
 walk_list=sequence_walk(num_iter)
@@ -131,7 +133,9 @@ for normal_node in normal_list:
         diff_x=centroid[0][0]-normal_node[0]
         diff_y=centroid[0][1]-normal_node[1]
         error_x=error_x+mod(diff_x)            
+        error_x2=error_x2+diff_x*diff_x            
         error_y=error_y+mod(diff_y)
+        error_y2=error_y2+diff_y*diff_y
         #print "\nActual Location\n"
         #print normal_node
         #print "\nEstimated Location\n"
@@ -146,6 +150,7 @@ print "Average error in y-coordinate"
 print avgerror_y
 print "Average time for each node"
 print average_time
+avgstd=sqrt(error_x2+error_y2)/(2*normal_nodes)
 files=open('result_moving_sensor.txt','a')
-files.write(str(node_range)+'    '+str(num_iter)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
+files.write(str(node_range)+'    '+str(num_iter)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'    '+str(avgstd)+'\n')
 files.close()

@@ -11,10 +11,10 @@ import random
 import itertools
 import numpy as np
 import time
-x_max=5000
-y_max=5000
+x_max=10000
+y_max=10000
 percent_beacon=0.3
-total_nodes=5000
+total_nodes=1000
 node_range=100
 
 def mod(x):
@@ -167,12 +167,16 @@ for i in range(0,len(beacon_list)):
 
 error_x=0
 error_y=0
+error_x2=0
+error_y2=0
 for normal_node in normal_list:
         (x,y)=find_min(normal_node)
         diff_x=x-normal_node[0]
         diff_y=y-normal_node[1]
         error_x=error_x+mod(diff_x)            
+        error_x2=error_x2+diff_x*diff_x            
         error_y=error_y+mod(diff_y)
+        error_y2=error_y2+diff_y*diff_y
         #print "\nActual Location\n"
         #print normal_node
         #print "\nEstimated Location\n"
@@ -181,6 +185,7 @@ program_time=time.time() - start_time
 average_time=program_time/normal_nodes
 avgerror_x=(error_x)/normal_nodes
 avgerror_y=(error_y)/normal_nodes
+avgstd=sqrt(error_x2+error_y2)/(2*normal_nodes)
 print "Average error in x-coordinate"
 print avgerror_x
 print "Average error in y-coordinate"
@@ -189,5 +194,5 @@ print "Average time required"
 print average_time
 print "hi"
 files=open('result_gradient.txt','a')
-files.write(str(node_range)+'    '+str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
+files.write(str(node_range)+'    '+str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'    '+str(avgstd)+'\n')
 files.close()

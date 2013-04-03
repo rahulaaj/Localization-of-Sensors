@@ -13,9 +13,9 @@ import numpy as np
 import time
 x_max=10000
 y_max=10000
-percent_beacon=0.01
-total_nodes=5000
-node_range=200
+percent_beacon=0.05
+total_nodes=1000
+node_range=400
 
 def mod(x):
         if (x>0):
@@ -113,12 +113,16 @@ while(count):
 
 error_x=0
 error_y=0
+error_x2=0
+error_y2=0
 for normal_node in normal_list:
         (x,y)=final_coordinates[normal_node]
         diff_x=x-normal_node[0]
         diff_y=y-normal_node[1]
         error_x=error_x+mod(diff_x)            
+        error_x2=error_x2+diff_x*diff_x            
         error_y=error_y+mod(diff_y)
+        error_y2=error_y2+diff_y*diff_y
         #print "\nActual Location\n"
         #print normal_node
         #print "\nEstimated Location\n"
@@ -127,6 +131,7 @@ program_time=time.time() - start_time
 average_time=program_time/normal_nodes
 avgerror_x=(error_x)/normal_nodes
 avgerror_y=(error_y)/normal_nodes
+avgstd=sqrt(error_x2+error_y2)/(2*normal_nodes)
 print "Average error in x-coordinate"
 print avgerror_x
 print "Average error in y-coordinate"
@@ -134,5 +139,5 @@ print avgerror_y
 print "Average time required"
 print average_time
 files=open('result_diffusion.txt','a')
-files.write(str(node_range)+'    '+str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'\n')
+files.write(str(node_range)+'    '+str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'    '+str(avgstd)+'\n')
 files.close()
