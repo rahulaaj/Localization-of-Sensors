@@ -11,11 +11,11 @@ import random
 import itertools
 import numpy as np
 import time
-x_max=1000
-y_max=1000
-percent_beacon=0.3
-total_nodes=1000
-node_range=50
+x_max=10000
+y_max=10000
+percent_beacon=0.01
+total_nodes=5000
+node_range=200
 
 def mod(x):
         if (x>0):
@@ -96,17 +96,20 @@ def averageNeighbors(neighbors):
 
 old_x=0
 new_x=x_max+1
-flag=1000
-for normal_node in normal_list:
-        while(flag):
-                neighbors=neighbor_dict[normal_node]
-                (new_x,new_y)=averageNeighbors(neighbors)
-                #print new_x
-                old_x=new_x
-                final_coordinates[normal_node]=(new_x,new_y)
-                flag=flag-1
-        flag=1000
-        #print "Done"                
+flag=100
+count=100
+while(count):
+        for normal_node in normal_list:
+                while(flag):
+                        neighbors=neighbor_dict[normal_node]
+                        (new_x,new_y)=averageNeighbors(neighbors)
+                        #print new_x
+                        old_x=new_x
+                        final_coordinates[normal_node]=(new_x,new_y)
+                        flag=flag-1
+                flag=100
+                #print "Done"  
+        count=count-1              
 
 error_x=0
 error_y=0
