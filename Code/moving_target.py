@@ -8,11 +8,11 @@ import random
 import itertools
 import numpy as np
 import time
-x_max=10000
-y_max=10000
-total_nodes=1000
+x_max=5000
+y_max=5000
+total_nodes=500
 node_range=100
-percentage_beacon=0.3
+percentage_beacon=0.5
 walk_length=x_max/2
 def random_coordinate():
         return (randint(x_max,y_max),randint(x_max,y_max))
@@ -59,6 +59,7 @@ def point_inside_polygon(x,y,poly):
 
 def findIntersect(inside_set):
         if (len(inside_set)==0):
+                print "single" 
                 return [(0,0),(x_max,0),(x_max,y_max),(0,y_max),(0,0)]
         elif (len(inside_set)==1):
                 p1=Polygon(inside_set[0])
@@ -123,6 +124,7 @@ rectangle_list=all_rectangles(beacon_list)
 #print rectangle_list
 big_box=[(0,0),(x_max,0),(x_max,y_max),(0,y_max)]
 for normal_node in normal_list:
+		print str(normal_node)
 		inside_set=[big_box]
 		for i in range(1-(x_max/(4*node_range)),x_max/(4*node_range)):
 			for rectangle in rectangle_list:
@@ -156,5 +158,5 @@ print "Average time for each node"
 print average_time
 avgstd=sqrt(error_x2+error_y2)/(2*normal_nodes)
 files=open('result_moving_target.txt','a')
-files.write(str(node_range)+'    '+str(num_iter)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'    '+str(avgstd)+'\n')
+files.write(str(node_range)+'    '+str(beacon_nodes)+'    '+str(normal_nodes)+'    '+str(x_max)+'    '+str(y_max)+'    '+str(avgerror_x)+'    '+str(avgerror_y)+'    '+str(average_time)+'    '+str(avgstd)+'\n')
 files.close()
